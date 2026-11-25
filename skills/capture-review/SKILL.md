@@ -36,10 +36,8 @@ All reads and writes go through the script. **Never** read or edit `.agents/revi
    ]}
    EOF
    ```
-   If nothing is worth recording, skip this step and return `[Review Memory] nothing to record`.
+   If nothing is worth recording, run `python3 ~/.agents/skills/capture-review/scripts/capture.py skip` instead.
 
 4. If the output starts with `[Review Memory] ERROR:`, fix the JSON as the message says and **retry once**. If it still fails, return the error verbatim.
 
-5. Return **only** the last line of the script output, with no explanation.
-
-
+5. Return **only** the last line of the script output, with no explanation. Keep any `NOTE:` it contains; it tells the user how to fix their setup.

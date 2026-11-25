@@ -13,7 +13,7 @@ description: Runs code-review, then records reusable lessons in this repo's revi
 ## 2. Collect findings
 
 Take the verbatim `Standards` and `Adversarial` sections of the report, keeping file paths (either section may be absent). Ignore the `Spec` section.
-If neither section has findings, end your reply with `[Review Memory] nothing to record` and stop.
+If neither section has findings, run `python3 ~/.agents/skills/capture-review/scripts/capture.py skip`, end your reply with its output line verbatim, and stop.
 
 ## 3. Capture
 
@@ -26,5 +26,4 @@ The capture steps live in `~/.agents/skills/capture-review/SKILL.md`.
 
 ## 4. Report
 
-Append the single `[Review Memory] ...` line to the end of your reply verbatim, even if it is an error. Never edit the ledger or the rules file yourself.
-
+Append the single `[Review Memory] ...` line to the end of your reply verbatim, even if it is an error or contains a `NOTE:`. Never edit the ledger or the rules file yourself.
