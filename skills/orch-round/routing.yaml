@@ -1,0 +1,75 @@
+# routing.yaml — orch-round skill 的路由配置（放在 skill 基目录里，随 skill 一起同步）
+#
+# 两类内容，约束力不同：
+#   - harnesses / allowed_models / vendors / rules / orchestrator：硬约束，任何时候都遵守。
+#   - domains / last_resort / hard_upgrade 里的模型选择和 effort：参考先验。
+#     来源是 2026-11 的公开基准和用户偏好，不是在你的仓库里测出来的。
+#     主控默认照做，有理由时可以偏离，理由写进 ledger 的 deviation 字段。
+#
+# 条目格式：[harness/group, 模型, effort]
+# 模型 ID 已按 2026-11-26 的 `agy models` 和 Codex 模型列表核对。
+
+harnesses:                           # 交给 `hc run ... -- <command>` 的完整命令；{prompt} 是首个任务
+  claude: {command: [claude, "{prompt}", --model, "{model}", --effort, "{effort}", --permission-mode, acceptEdits]}
+  codex:  {command: [codex, --no-daemon, --model, "{model}", -c, "model_reasoning_effort={effort}", "{prompt}"]}
+                                     # hc 要求 Codex 带 --no-daemon，否则命令跑在 hc 之外
+  agy:    {command: [agy, --model, "{model}-{effort}", --mode, accept-edits, -i, "{prompt}"]}
+                                     # agy 的 slug 自带档位，如 gemini-4-neon-high；-i 发送首个任务后保持交互
+
+allowed_models:                      # 白名单，其他模型一律不用
+  claude/claude:  [opus, sonnet, haiku]              # Claude Code 别名，指向 5.5 系列
+  codex/codex:    [gpt-6.2-sol, gpt-6.2-astra]
+  agy/gemini:     [gemini-4-neon, gemini-4-hydrogen]
+  agy/claude-gpt: [claude-sonnet-5-5]                # 只用于 last_resort
+
+vendors:                             # 判断"同一厂商"按模型的厂商，不按 harness
+  anthropic: [opus, sonnet, haiku, claude-sonnet-5-5]
+  openai:    [gpt-6.2-sol, gpt-6.2-astra]
+  google:    [gemini-4-neon, gemini-4-hydrogen]
+
+domains:                             # 参考先验：按顺序取第一个通过全部硬约束的候选
+  terminal:
+    - [agy/gemini,    gemini-4-neon,     high]
+    - [claude/claude, sonnet,            high]
+    - [codex/codex,   gpt-6.2-sol,       high]
+  backend:
+    - [agy/gemini,    gemini-4-neon,     high]
+    - [codex/codex,   gpt-6.2-sol,       medium]
+    - [claude/claude, sonnet,            medium]
+  frontend:
+    - [claude/claude, sonnet,            high]
+    - [agy/gemini,    gemini-4-hydrogen, high]
+    - [codex/codex,   gpt-6.2-sol,       high]
+  docs:
+    - [agy/gemini,    gemini-4-neon,     medium]
+    - [claude/claude, sonnet,            medium]
+  tests:
+    - [codex/codex,   gpt-6.2-sol,       high]
+    - [claude/claude, sonnet,            high]
+    - [agy/gemini,    gemini-4-neon,     high]
+  review:
+    - [codex/codex,   gpt-6.2-sol,       high]
+    - [agy/gemini,    gemini-4-neon,     high]
+    - [claude/claude, opus,              high]
+  bulk:
+    - [agy/gemini,    gemini-4-hydrogen, medium]
+    - [claude/claude, haiku,             medium]
+
+last_resort:                         # 接在每个领域列表末尾（bulk 除外），只在前面全不可用时用
+  - [agy/claude-gpt, claude-sonnet-5-5, high]
+
+hard_upgrade:                        # tier: hard 的 ticket 选中某 harness 时换成这里的模型
+  claude: {model: opus,          effort: high}
+  agy:    {model: gemini-4-neon, effort: high}
+  codex:  {model: gpt-6.2-astra, effort: medium, only_if_weekly_pace_below: 1.0}
+                                     # 门槛不满足时保持 gpt-6.2-sol、effort high
+
+rules:                               # 硬约束
+  effort_cap: high
+  effort_floor: medium
+  claude_worker_cutoff_pct: 85       # Claude 周窗口用到这个比例后，Claude 只留给主控
+  max_workers_per_group: 2
+  tests_must_differ_from_author_vendor: true
+  review_must_differ_from_author_vendor: true
+
+orchestrator: [claude/claude, opus, high]   # 固定，不参与路由
