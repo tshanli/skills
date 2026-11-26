@@ -5,7 +5,7 @@ description: "herdr 多模型编排。用户要求启动、开始编排时，启
 
 # orch-round
 
-本 skill 的基目录（`<skill-base-dir>`）是装着这份 SKILL.md 的文件夹，里面有 `routing.yaml` 和 `scripts/orch-loop`。基目录是只读的同步缓存，修改在 claude.ai 的 skill 里做。
+本 skill 的基目录（`<skill-base-dir>`）是装着这份 SKILL.md 的文件夹，里面有 `routing.yaml`、`scripts/orch-loop` 和 `scripts/agent-quota`。基目录是只读的同步缓存，修改在 claude.ai 的 skill 里做。
 
 两种进入方式，按触发场景二选一：
 
@@ -67,7 +67,7 @@ Herdr 应用的命令是 `hc`（herdr-core），不是 `herdr`。开始前确认
 
 ### 1. 对齐状态
 
-读 next-round.md 和 RFC.md，运行 `hc ls --all --label orch=worker --json` 和 `agent-quota --json`。把 next-round.md 里记录的每个 worker 和 hc 的实际状态（`state`、`status.state`、`labels`）逐一核对，不一致时以 hc 为准，并把差异写进本轮交接。
+读 next-round.md 和 RFC.md，运行 `hc ls --all --label orch=worker --json` 和 `bash <skill-base-dir>/scripts/agent-quota --json`。把 next-round.md 里记录的每个 worker 和 hc 的实际状态（`state`、`status.state`、`labels`）逐一核对，不一致时以 hc 为准，并把差异写进本轮交接。
 
 完成标准：每个仍在运行的 worker，都能对应到它的 ticket、角色和当前状态。
 
